@@ -42,7 +42,7 @@
 
 ## instalar stack monitoreo
 
-    oc login https://192.168.64.11:8443 -u admin
+    oc login https://$(minishift ip):8443 -u admin
     oc create route edge --service=docker-registry -n default
 
 ---
@@ -64,17 +64,17 @@
 
 #### exportarmos imágenes a openshift
 
-    oc login https://192.168.64.11:8443 -u admin
-    docker login -u admin -p $(oc whoami -t) docker-registry-default.192.168.64.11.nip.io
+    oc login https://$(minishift ip):8443 -u admin
+    docker login -u admin -p $(oc whoami -t) docker-registry-default.$(minishift ip).nip.io
 
-    docker tag pelorus/committime docker-registry-default.192.168.64.11.nip.io/${PROJECT}/committime:latest
-    docker push docker-registry-default.192.168.64.11.nip.io/${PROJECT}/committime:latest
+    docker tag pelorus/committime docker-registry-default.$(minishift ip).nip.io/${PROJECT}/committime:latest
+    docker push docker-registry-default.$(minishift ip).nip.io/${PROJECT}/committime:latest
 
-    docker tag pelorus/deploytime docker-registry-default.192.168.64.11.nip.io/${PROJECT}/deploytime:latest
-    docker push docker-registry-default.192.168.64.11.nip.io/${PROJECT}/deploytime:latest
+    docker tag pelorus/deploytime docker-registry-default.$(minishift ip).nip.io/${PROJECT}/deploytime:latest
+    docker push docker-registry-default.$(minishift ip).nip.io/${PROJECT}/deploytime:latest
 
-    docker tag pelorus/failure docker-registry-default.192.168.64.11.nip.io/${PROJECT}/failure:latest
-    docker push docker-registry-default.192.168.64.11.nip.io/${PROJECT}/failure:latest
+    docker tag pelorus/failure docker-registry-default.$(minishift ip).nip.io/${PROJECT}/failure:latest
+    docker push docker-registry-default.$(minishift ip).nip.io/${PROJECT}/failure:latest
 
 #### config
 
@@ -111,9 +111,9 @@
 
 ### Ejemplo
 
-#### app-project2 (build jenkins strategy)
+#### app-project1 (build jenkins strategy)
 
-    oc new-project app-project2
+    oc new-project app-project1
 
 Crear secret con credenciales para descargar imagenes de registry.redhat.io
 
@@ -128,17 +128,17 @@ Importamos imagenes al namespace openshift
 
 Configuramos credenciales para que jenkins acceda al repositorio
 
-    oc create secret generic repository-credentials --from-literal=username=${GITHUB_USER} --from-literal=password=${GITHUB_TOKEN} --type=kubernetes.io/basic-auth -n app-project2
+    oc create secret generic repository-credentials --from-literal=username=${GITHUB_USER} --from-literal=password=${GITHUB_TOKEN} --type=kubernetes.io/basic-auth -n app-project1
 
-    oc label secret repository-credentials credential.sync.jenkins.openshift.io=true -n app-project2
+    oc label secret repository-credentials credential.sync.jenkins.openshift.io=true -n app-project1
     
-    oc annotate secret repository-credentials 'build.openshift.io/source-secret-match-uri-1=ssh://github.com/*' -n app-project2
+    oc annotate secret repository-credentials 'build.openshift.io/source-secret-match-uri-1=ssh://github.com/*' -n app-project1
 
 Desplegamos app example1
 
-    oc create -f https://raw.githubusercontent.com/damianlezcano/prometheus-example-fuse/master/template.yaml -n app-project2
+    oc create -f https://raw.githubusercontent.com/damianlezcano/prometheus-example-fuse/master/template.yaml -n app-project1
 
-    oc new-app --template java-app-deploy -p APP_NAME=example1 -p GIT_REPO=https://github.com/damianlezcano/prometheus-example-fuse.git -p GIT_BRANCH=master -n app-project2
+    oc new-app --template java-app-deploy -p APP_NAME=example1 -p GIT_REPO=https://github.com/damianlezcano/prometheus-example-fuse.git -p GIT_BRANCH=master -n app-project1
 
     oc start-build example1-pipeline
 
@@ -149,4 +149,4 @@ Generar commit para el tablero DevOps (MDT)
 
 Generamos tráfico para el trablero de metricas
 
-    curl --location --request POST 'http://example1-app-project2.${minishift ip}.nip.io/api/say' --header 'Content-Type: text/plain' --data-raw 'Hello'
+    curl --location --request POST 'http://example1-app-project1.${minishift ip}.nip.io/api/say' --header 'Content-Type: text/plain' --data-raw 'Hello'
