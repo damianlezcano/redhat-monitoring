@@ -44,7 +44,6 @@
 
     oc login https://192.168.64.11:8443 -u admin
     oc create route edge --service=docker-registry -n default
-    oc import-image jenkins:latest --from=docker.io/openshift/jenkins-2-centos7:v3.11 --namespace=openshift --confirm
 
 ---
 
@@ -112,24 +111,34 @@
 
 ### Ejemplo
 
-#### app-project1 (build jenkins strategy)
+#### app-project2 (build jenkins strategy)
 
-    oc new-project app-project1
+    oc new-project app-project2
 
-    export REPOSITORY_CREDENTIALS_USERNAME=damianlezcano
-    export REPOSITORY_CREDENTIALS_PASSWORD=xxxx
+Crear secret con credenciales para descargar imagenes de registry.redhat.io
 
-    oc create secret generic repository-credentials --from-literal=username=${REPOSITORY_CREDENTIALS_USERNAME} --from-literal=password=${REPOSITORY_CREDENTIALS_PASSWORD} --type=kubernetes.io/basic-auth -n app-project1
+    oc create secret generic registryredhatiosecret --from-file=.dockerconfigjson=config.json --type=kubernetes.io/dockerconfigjson
+    oc secrets link default registryredhatiosecret --for=pull
+    oc secrets link builder registryredhatiosecret
 
-    oc label secret repository-credentials credential.sync.jenkins.openshift.io=true -n app-project1
+Importamos imagenes al namespace openshift
+
+    oc import-image openshift3/jenkins-2-rhel7 --from=registry.redhat.io/openshift3/jenkins-2-rhel7 --confirm
+    oc import-image fuse7/fuse-java-openshift --from=registry.redhat.io/fuse7/fuse-java-openshift --confirm
+
+Configuramos credenciales para que jenkins acceda al repositorio
+
+    oc create secret generic repository-credentials --from-literal=username=${GITHUB_USER} --from-literal=password=${GITHUB_TOKEN} --type=kubernetes.io/basic-auth -n app-project2
+
+    oc label secret repository-credentials credential.sync.jenkins.openshift.io=true -n app-project2
     
-    oc annotate secret repository-credentials 'build.openshift.io/source-secret-match-uri-1=ssh://github.com/*' -n app-project1
+    oc annotate secret repository-credentials 'build.openshift.io/source-secret-match-uri-1=ssh://github.com/*' -n app-project2
 
 Desplegamos app example1
 
-    oc create -f https://raw.githubusercontent.com/damianlezcano/prometheus-example-fuse/master/template.yaml -n app-project1
+    oc create -f https://raw.githubusercontent.com/damianlezcano/prometheus-example-fuse/master/template.yaml -n app-project2
 
-    oc new-app --template java-app-deploy -p APP_NAME=example1 -p GIT_REPO=https://github.com/damianlezcano/prometheus-example-fuse.git -p GIT_BRANCH=master -n app-project1
+    oc new-app --template java-app-deploy -p APP_NAME=example1 -p GIT_REPO=https://github.com/damianlezcano/prometheus-example-fuse.git -p GIT_BRANCH=master -n app-project2
 
     oc start-build example1-pipeline
 
@@ -138,7 +147,6 @@ Generar commit para el tablero DevOps (MDT)
     date > version.txt
     git add .;git commit -m "Cambio en version";git push
 
-
 Generamos tráfico para el trablero de metricas
 
-    curl --location --request POST 'http://localhost:8080/api/say' --header 'Content-Type: text/plain' --data-raw 'Hello'
+    curl --location --request POST 'http://example1-app-project2.${minishift ip}.nip.io/api/say' --header 'Content-Type: text/plain' --data-raw 'Hello'

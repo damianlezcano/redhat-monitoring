@@ -1,0 +1,10 @@
+{
+	"auths": {
+		"registry.redhat.io": {
+			"auth": "<<INGRESAR TOKEN>>"
+		}
+	},
+	"HttpHeaders": {
+		"User-Agent": "Docker-Client/18.09.5 (linux)"
+	}
+}
