@@ -32,6 +32,9 @@
     eval $(minishift oc-env)
     eval $(minishift docker-env)
     minishift openshift config set --patch '{"jenkinsPipelineConfig":{"autoProvisionEnabled":true}}'
+
+---
+
     minishift start --cpus=4 --memory=10GB --disk-size=60GB --vm-driver hyperkit --skip-registration
 
 #### Adding the cluster admin role, to the 'admin' user in Minishift
@@ -117,14 +120,14 @@
 
 Crear secret con credenciales para descargar imagenes de registry.redhat.io
 
-    oc create secret generic registryredhatiosecret --from-file=.dockerconfigjson=config.json --type=kubernetes.io/dockerconfigjson
-    oc secrets link default registryredhatiosecret --for=pull
-    oc secrets link builder registryredhatiosecret
+    oc create secret generic registryredhatiosecret --from-file=.dockerconfigjson=config.json --type=kubernetes.io/dockerconfigjson -n openshift
+    oc secrets link default registryredhatiosecret --for=pull -n openshift
+    oc secrets link builder registryredhatiosecret -n openshift
 
 Importamos imagenes al namespace openshift
 
-    oc import-image openshift3/jenkins-2-rhel7 --from=registry.redhat.io/openshift3/jenkins-2-rhel7 --confirm
-    oc import-image fuse7/fuse-java-openshift --from=registry.redhat.io/fuse7/fuse-java-openshift --confirm
+    oc import-image openshift3/jenkins:2 --from=registry.redhat.io/openshift3/jenkins-2-rhel7 --namespace=openshift --confirm
+    oc import-image fuse7/fuse-java-openshift --from=registry.redhat.io/fuse7/fuse-java-openshift --namespace=openshift --confirm
 
 Configuramos credenciales para que jenkins acceda al repositorio
 
