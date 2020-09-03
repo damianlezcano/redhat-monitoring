@@ -144,7 +144,7 @@ Desplegamos app example1
 
     oc new-app --template java-app-deploy -p APP_NAME=example1 -p GIT_REPO=https://github.com/damianlezcano/prometheus-example-fuse.git -p GIT_BRANCH=master -n app-project1
 
-    oc start-build example1-pipeline
+    oc start-build example1-pipeline -n app-project1
 
 Generar commit para el tablero DevOps (MDT)
 
