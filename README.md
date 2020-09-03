@@ -57,6 +57,11 @@
 
     oc new-app -f prometheus.yml -p NAMESPACE=${PROJECT} -p PROMETHEUS_DATA_STORAGE_SIZE=1Gi -p ALERTMANAGER_DATA_STORAGE_SIZE=1Gi
 
+Desplegamos Fake email para poder visualizar las notificaciones de alertmanager
+
+    oc new-app mailhog/mailhog -n ${PROJECT}
+    oc expose svc/mailhog --port=8025 -n ${PROJECT}
+
 ### exporters (MDT)
 
 #### creamos las imágenes

@@ -535,9 +535,9 @@ objects:
         - alert: AMQTooManyMessagesInDLQOnUAT
           annotations:
             summary: "AMQ too many messages in queue (instance {{ $labels.instance }})"
-            description: "DLQ is filling up (> 100 msgs)\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}"
+            description: "DLQ is filling up (> 10 msgs)\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}"
           expr: artemis_persistent_size{address="DLQ"} > 10
-          for: 5m
+          for: 1m
           labels:
             severity: warning
 
@@ -888,8 +888,8 @@ objects:
     alertmanager.yml: |
       global:
         # The smarthost and SMTP sender used for mail notifications.
-        smtp_smarthost: '192.168.145.156:25'
-        smtp_from: 'alertmanager@openshift.opentlc.com'
+        smtp_smarthost: 'mailhog:1025'
+        smtp_from: 'alertmanager@redhat.com'
         smtp_require_tls: false
         slack_api_url: 'https://hooks.slack.com/services/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'
 
@@ -934,7 +934,7 @@ objects:
       - name: 'podrestartingtoooftenonuat'
         email_configs:
         - to: 'dlezcano@redhat.com'
-        - to: 'mmoras@edenor.com'
+        - to: 'lezcano.da@gmail.com'
         slack_configs:
         - channel: '#célula-agile'
           send_resolved: true

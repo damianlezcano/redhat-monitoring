@@ -16,8 +16,8 @@
   "editable": true,
   "gnetId": 9087,
   "graphTooltip": 0,
-  "id": 3,
-  "iteration": 1598276278314,
+  "id": 1,
+  "iteration": 1599101395585,
   "links": [],
   "panels": [
     {
@@ -26,6 +26,13 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": "prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {},
+          "links": []
+        },
+        "overrides": []
+      },
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
@@ -34,6 +41,7 @@
         "x": 0,
         "y": 0
       },
+      "hiddenSeries": false,
       "id": 11,
       "legend": {
         "alignAsTable": true,
@@ -53,9 +61,10 @@
       "links": [],
       "nullPointMode": "null",
       "options": {
-        "dataLinks": []
+        "alertThreshold": true
       },
       "percentage": false,
+      "pluginVersion": "7.2.0-75d4efacpre",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -119,6 +128,13 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": "prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {},
+          "links": []
+        },
+        "overrides": []
+      },
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
@@ -127,6 +143,7 @@
         "x": 0,
         "y": 9
       },
+      "hiddenSeries": false,
       "id": 9,
       "legend": {
         "alignAsTable": true,
@@ -146,9 +163,10 @@
       "links": [],
       "nullPointMode": "null",
       "options": {
-        "dataLinks": []
+        "alertThreshold": true
       },
       "percentage": false,
+      "pluginVersion": "7.2.0-75d4efacpre",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -214,7 +232,7 @@
       }
     }
   ],
-  "schemaVersion": 20,
+  "schemaVersion": 26,
   "style": "dark",
   "tags": [
     "apache artemis"
@@ -224,9 +242,9 @@
       {
         "allValue": null,
         "current": {
-          "tags": [],
-          "text": "esb-dev",
-          "value": "esb-dev"
+          "selected": false,
+          "text": "app-project1",
+          "value": "app-project1"
         },
         "datasource": "prometheus",
         "definition": "label_values(artemis_address_memory_usage,namespace)",
@@ -238,8 +256,8 @@
         "options": [
           {
             "selected": true,
-            "text": "esb-dev",
-            "value": "esb-dev"
+            "text": "app-project1",
+            "value": "app-project1"
           }
         ],
         "query": "label_values(artemis_address_memory_usage,namespace)",
@@ -256,9 +274,9 @@
       {
         "allValue": null,
         "current": {
-          "tags": [],
-          "text": "10.128.4.17:8161",
-          "value": "10.128.4.17:8161"
+          "selected": false,
+          "text": "172.17.0.18:8161",
+          "value": "172.17.0.18:8161"
         },
         "datasource": "prometheus",
         "definition": "label_values(artemis_persistent_size{namespace=\"$namespace\",broker=~\".+\"}, instance)",
@@ -313,5 +331,5 @@
   "timezone": "",
   "title": "AMQ",
   "uid": "sLliSaBiz",
-  "version": 6
+  "version": 1
 }
