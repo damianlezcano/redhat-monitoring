@@ -126,8 +126,9 @@ Crear secret con credenciales para descargar imagenes de registry.redhat.io
 
 Importamos imagenes al namespace openshift
 
-    oc import-image openshift3/jenkins:2 --from=registry.redhat.io/openshift3/jenkins-2-rhel7 --namespace=openshift --confirm
-    oc import-image fuse7/fuse-java-openshift --from=registry.redhat.io/fuse7/fuse-java-openshift --namespace=openshift --confirm
+    oc project openshift
+    oc import-image openshift3/jenkins:2 --from=registry.redhat.io/openshift3/jenkins-2-rhel7 --confirm
+    oc import-image fuse7/fuse-java-openshift:1.2 --from=registry.redhat.io/fuse7/fuse-java-openshift --confirm
 
 Configuramos credenciales para que jenkins acceda al repositorio
 
