@@ -536,7 +536,7 @@ objects:
           annotations:
             summary: "AMQ too many messages in queue (instance {{ $labels.instance }})"
             description: "DLQ is filling up (> 100 msgs)\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}"
-          expr: artemis_persistent_size{address="DLQ"} > 100
+          expr: artemis_persistent_size{address="DLQ"} > 10
           for: 5m
           labels:
             severity: warning

@@ -129,6 +129,8 @@ Importamos imagenes al namespace openshift
     oc project openshift
     oc import-image openshift3/jenkins:2 --from=registry.redhat.io/openshift3/jenkins-2-rhel7 --confirm
     oc import-image fuse7/fuse-java-openshift:1.2 --from=registry.redhat.io/fuse7/fuse-java-openshift --confirm
+    oc import-image amq7/amq-broker-rhel7-operator:0.13 --from=registry.redhat.io/amq7/amq-broker-rhel7-operator:0.13 --confirm
+    oc import-image amq7/amq-broker:7.6 --from=registry.redhat.io/amq7/amq-broker:7.6 --confirm
 
 Configuramos credenciales para que jenkins acceda al repositorio
 
@@ -137,6 +139,19 @@ Configuramos credenciales para que jenkins acceda al repositorio
     oc label secret repository-credentials credential.sync.jenkins.openshift.io=true -n app-project1
     
     oc annotate secret repository-credentials 'build.openshift.io/source-secret-match-uri-1=ssh://github.com/*' -n app-project1
+
+Desplegamos AMQ
+
+    oc create -f amq-broker-operator/service_account.yaml -n app-project1
+    oc create -f amq-broker-operator/role.yaml -n app-project1
+    oc create -f amq-broker-operator/role_binding.yaml -n app-project1
+    oc create -f amq-broker-operator/crds/broker_activemqartemis_crd.yaml -n app-project1
+    oc create -f amq-broker-operator/crds/broker_activemqartemisaddress_crd.yaml -n app-project1
+    oc create -f amq-broker-operator/crds/broker_activemqartemisscaledown_crd.yaml -n app-project1
+    oc create -f amq-broker-operator/operator.yaml -n app-project1
+    oc create secret generic broker-amq-credentials-secret --from-literal=clusterUser=clusterUser --from-literal=clusterPassword=clusterPassword --from-literal=AMQ_USER=admin --from-literal=AMQ_PASSWORD=admin -n app-project1
+    oc create -f amq-broker-operator/crs/broker_activemqartemis_cr.yaml -n app-project1
+    oc set env statefulset broker-amq-ss AMQ_ENABLE_METRICS_PLUGIN=true -n app-project1
 
 Desplegamos app example1
 
@@ -154,3 +169,5 @@ Generar commit para el tablero DevOps (MDT)
 Generamos tráfico para el trablero de metricas
 
     curl --location --request POST 'http://example1-app-project1.${minishift ip}.nip.io/api/say' --header 'Content-Type: text/plain' --data-raw 'Hello'
+
+* Si se reemplaza 'World' por 'Error' esto genera un error en la ruta camel enviando el mensaje a la DLQ, permitiendo activar una de las reglas configuradas en prometheus *
