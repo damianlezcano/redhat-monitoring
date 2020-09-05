@@ -104,7 +104,7 @@ objects:
           imagePullPolicy: IfNotPresent
           ports:
           - name: http
-            containerPort: 7070
+            containerPort: 80
             protocol: TCP
           volumeMounts:
           - mountPath: /data/admin/api/services/44/proxy/configs/staging/
