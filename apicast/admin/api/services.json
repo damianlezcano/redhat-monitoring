@@ -1,0 +1,54 @@
+{
+    "services": [
+        {
+            "service": {
+                "backend_version": "1",
+                "buyer_can_select_plan": false,
+                "buyer_key_regenerate_enabled": true,
+                "buyer_plan_change_permission": "request",
+                "buyers_manage_apps": true,
+                "buyers_manage_keys": true,
+                "created_at": "2020-09-04T16:09:18-03:00",
+                "custom_keys_enabled": true,
+                "deployment_option": "hosted",
+                "description": "Echo",
+                "end_user_registration_required": true,
+                "id": 44,
+                "intentions_required": false,
+                "links": [
+                    {
+                        "href": "https://dev-admin.3scale.apps.openshift.ase.local/admin/api/services/44/metrics",
+                        "rel": "metrics"
+                    },
+                    {
+                        "href": "https://dev-admin.3scale.apps.openshift.ase.local/admin/api/services/44/end_user_plans",
+                        "rel": "end_user_plans"
+                    },
+                    {
+                        "href": "https://dev-admin.3scale.apps.openshift.ase.local/admin/api/services/44",
+                        "rel": "self"
+                    },
+                    {
+                        "href": "https://dev-admin.3scale.apps.openshift.ase.local/admin/api/services/44/service_plans",
+                        "rel": "service_plans"
+                    },
+                    {
+                        "href": "https://dev-admin.3scale.apps.openshift.ase.local/admin/api/services/44/application_plans",
+                        "rel": "application_plans"
+                    },
+                    {
+                        "href": "https://dev-admin.3scale.apps.openshift.ase.local/admin/api/services/44/features",
+                        "rel": "features"
+                    }
+                ],
+                "mandatory_app_key": true,
+                "name": "Echo",
+                "referrer_filters_required": false,
+                "state": "incomplete",
+                "support_email": "dev@medife.com.ar",
+                "system_name": "echo",
+                "updated_at": "2020-09-04T16:11:43-03:00"
+            }
+        }
+    ]
+}

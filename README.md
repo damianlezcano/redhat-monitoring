@@ -6,7 +6,7 @@ Prometheus + Alertmanager + Grafana (Tablero DevOps (MDT) + Metricas Fuse / AMQ 
 - __[Paso 2](#prometheus)__ - Procedimiento de instalación Prometheus.
 - __[Paso 3](#exporters-mdt)__ - Procedimiento de instalación Exporter tablero DevOps (MDT).
 - __[Paso 4](#grafana)__ - Procedimiento de instalación Grafana.
-- __[Paso 5](#ejemplo)__ - Despliegue aplicación de ejemplo.
+- __[Paso 5](#ejemplo)__ - Despliegue aplicación de ejemplo (AMQ y Apicast)
 
 ## instalar minishift (okd)
 
@@ -58,11 +58,6 @@ Prometheus + Alertmanager + Grafana (Tablero DevOps (MDT) + Metricas Fuse / AMQ 
 ### prometheus
 
     oc new-app -f prometheus.yml -p NAMESPACE=${PROJECT} -p PROMETHEUS_DATA_STORAGE_SIZE=1Gi -p ALERTMANAGER_DATA_STORAGE_SIZE=1Gi
-
-Desplegamos Fake email para poder visualizar las notificaciones de alertmanager
-
-    oc new-app mailhog/mailhog -n ${PROJECT}
-    oc expose svc/mailhog --port=8025 -n ${PROJECT}
 
 ### exporters (MDT)
 
@@ -138,6 +133,7 @@ Importamos imagenes al namespace openshift
     oc import-image fuse7/fuse-java-openshift:1.2 --from=registry.redhat.io/fuse7/fuse-java-openshift --confirm
     oc import-image amq7/amq-broker-rhel7-operator:0.13 --from=registry.redhat.io/amq7/amq-broker-rhel7-operator:0.13 --confirm
     oc import-image amq7/amq-broker:7.6 --from=registry.redhat.io/amq7/amq-broker:7.6 --confirm
+    oc import-image 3scale-amp2/apicast-gateway-rhel7 --from=registry.redhat.io/3scale-amp2/apicast-gateway-rhel7 --confirm
 
 Configuramos credenciales para que jenkins acceda al repositorio
 
@@ -160,6 +156,11 @@ Desplegamos AMQ
     oc create -f amq-broker-operator/crs/broker_activemqartemis_cr.yaml -n app-project1
     oc set env statefulset broker-amq-ss AMQ_ENABLE_METRICS_PLUGIN=true -n app-project1
 
+Desplegamos Fake email para poder visualizar las notificaciones de alertmanager
+
+    oc new-app mailhog/mailhog -n ${PROJECT}
+    oc expose svc/mailhog --port=8025 -n ${PROJECT}
+
 Desplegamos app example1
 
     oc create -f https://raw.githubusercontent.com/damianlezcano/prometheus-example-fuse/master/template.yaml -n app-project1
@@ -167,6 +168,19 @@ Desplegamos app example1
     oc new-app --template java-app-deploy -p APP_NAME=example1 -p GIT_REPO=https://github.com/damianlezcano/prometheus-example-fuse.git -p GIT_BRANCH=master -n app-project1
 
     oc start-build example1-pipeline -n app-project1
+
+Desplegamos apicast
+
+    //oc new-app -e OPENSSL_VERIFY=false -e APICAST_RESPONSE_CODES=true -e APICAST_CONFIGURATION_LOADER=boot -e APICAST_CONFIGURATION_CACHE=0 -e THREESCALE_DEPLOYMENT_ENV=staging -e APICAST_LOG_LEVEL=debug openshift/apicast-gateway-rhel8 --name=apicast-staging -n app-project1
+
+    oc create secret generic apicast-configuration-url-secret --from-literal=password=https://c903ebd69db06c50332b2adbd05300f82f36829231da66e0abb5d45c0adc8826@noprod-admin.prod-comafi-3scale.apps.bue299.comafi.com.ar --type=kubernetes.io/basic-auth -n app-project1
+
+    docker build -t mock-rest .
+    docker run --rm -it --name mock-rest -p 8080:8080 mock-rest
+
+    oc new-app -f apicast.yml -p APICAST_NAME=apicast-staging -p DEPLOYMENT_ENVIRONMENT=staging -p CONFIGURATION_LOADER=lazy -p EXTENDED_METRICS=true -n app-project2
+
+
 
 Generar commit para el tablero DevOps (MDT)
 
@@ -178,3 +192,28 @@ Generamos tráfico para el trablero de metricas
     curl --location --request POST 'http://example1-app-project1.${minishift ip}.nip.io/api/say' --header 'Content-Type: text/plain' --data-raw 'World'
 
 _Si se reemplaza 'World' por 'Error' esto genera un error en la ruta camel enviando el mensaje a la DLQ, permitiendo activar luego de mas de 10 intentos una de las reglas configuradas en prometheus y generando finalmente una notificacion por email (Ir a http://mailhog-${PROJECT}.${minishift ip}.nip.io/)_
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+oc delete deploymentconfig.apps.openshift.io "apicast-staging"
+oc delete secrets "apicast-configuration-url-secret"
+oc delete services "apicast-staging"
+oc delete routes.route.openshift.io "apicast-staging"
+
+
+
+
+curl http://localhost:9421/metrics
+https://medium.com/@joelicious/red-hat-3scale-monitoring-with-prometheus-and-grafana-4e683f3125bb

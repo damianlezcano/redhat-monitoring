@@ -871,7 +871,7 @@ objects:
           role: endpoints
           namespaces:
             names:
-            - ${PROJECT}
+            - ${NAMESPACE}
       alerting:
         alertmanagers:
         - scheme: http
@@ -891,7 +891,6 @@ objects:
         smtp_smarthost: 'mailhog:1025'
         smtp_from: 'alertmanager@redhat.com'
         smtp_require_tls: false
-        slack_api_url: 'https://hooks.slack.com/services/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'
 
       # The directory from which notification templates are read.
       templates: 
@@ -935,12 +934,6 @@ objects:
         email_configs:
         - to: 'dlezcano@redhat.com'
         - to: 'lezcano.da@gmail.com'
-        slack_configs:
-        - channel: '#célula-agile'
-          send_resolved: true
       - name: 'amqtoomanymessagesindlqonuat'
         email_configs:
         - to: 'dlezcano@redhat.com'
-      - name: alert-buffer-wh
-        webhook_configs:
-        - url: http://localhost:9099/topics/alerts
