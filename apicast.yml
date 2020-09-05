@@ -104,7 +104,7 @@ objects:
           imagePullPolicy: IfNotPresent
           ports:
           - name: http
-            containerPort: 80
+            containerPort: 7070
             protocol: TCP
           volumeMounts:
           - mountPath: /data/admin/api/services/44/proxy/configs/staging/
@@ -249,9 +249,9 @@ objects:
                       "auth_user_key": "user_key",
                       "authentication_method": "1",
                       "backend": {
-                          "endpoint": "http://192.168.1.4",
-                          "host": "192.168.1.4"
-                      },
+                          "endpoint": "http://mock-rest-app-project2.192.168.64.11.nip.io:80",
+                          "host": "mock-rest-app-project2.192.168.64.11.nip.io"
+                      }
                       "created_at": "2020-09-04T16:09:18-03:00",
                       "credentials_location": "query",
                       "deployed_at": null,
@@ -342,7 +342,22 @@ objects:
   metadata:
     name: apicast-configuration-url-secret
   stringData:
-    password: "http://c305ade34d4b720fa1ccfe3bfdfa0bb30c2764b108e9187063d663a7fa935016@192.168.1.4"
+    password: "http://c305ade34d4b720fa1ccfe3bfdfa0bb30c2764b108e9187063d663a7fa935016@mock-rest-app-project2.192.168.64.11.nip.io"
+
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      name: mock-rest
+    name: mock-rest
+  spec:
+    ports:
+    - name: http
+      port: 8080
+      protocol: TCP
+      targetPort: http
+    selector:
+      deploymentconfig: "${APICAST_NAME}"
 
 - apiVersion: v1
   kind: Service

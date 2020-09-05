@@ -173,7 +173,7 @@ Desplegamos apicast
 
     //oc new-app -e OPENSSL_VERIFY=false -e APICAST_RESPONSE_CODES=true -e APICAST_CONFIGURATION_LOADER=boot -e APICAST_CONFIGURATION_CACHE=0 -e THREESCALE_DEPLOYMENT_ENV=staging -e APICAST_LOG_LEVEL=debug openshift/apicast-gateway-rhel8 --name=apicast-staging -n app-project1
 
-    //oc create secret generic apicast-configuration-url-secret --from-literal=password=https://c903ebd69db06c50332b2adbd05300f82f36829231da66e0abb5d45c0adc8826@noprod-admin.prod-comafi-3scale.apps.bue299.comafi.com.ar --type=kubernetes.io/basic-auth -n app-project1
+    //oc create secret generic apicast-configuration-url-secret --from-literal=password=http://c305ade34d4b720fa1ccfe3bfdfa0bb30c2764b108e9187063d663a7fa935016@localhost:7070 --type=kubernetes.io/basic-auth -n app-project1
 
     docker build -t mock-rest apicast/.
     //docker run --rm -it --name mock-rest -p 8080:8080 mock-rest
@@ -210,11 +210,16 @@ _Si se reemplaza 'World' por 'Error' esto genera un error en la ruta camel envia
 
 
 
+curl http://mock-rest:8080/transactions/authrep.xml
+curl http://mock-rest.app-project2.svc:8080/transactions/authrep.xml
+curl http://mock-rest-app-project2.192.168.64.11.nip.io/transactions/authrep.xml
 
 
-
-
-oc delete deploymentconfig.apps.openshift.io "apicast-staging"
+oc delete service "mock-rest"
+oc delete deploymentconfigs.apps.openshift.io "apicast-staging"
+oc delete configmaps "mock-rest-services-config"
+oc delete configmap "mock-rest-transactions-config"
+oc delete configmaps "mock-rest-admin-config"
 oc delete secrets "apicast-configuration-url-secret"
 oc delete services "apicast-staging"
 oc delete routes.route.openshift.io "apicast-staging"
