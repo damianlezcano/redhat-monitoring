@@ -72,14 +72,14 @@ Prometheus + Alertmanager + Grafana (Tablero DevOps (MDT) + Metricas Fuse / AMQ 
     oc login https://$(minishift ip):8443 -u admin
     docker login -u admin -p $(oc whoami -t) docker-registry-default.$(minishift ip).nip.io
 
-    docker tag pelorus/committime docker-registry-default.$(minishift ip).nip.io/${PROJECT}/committime:latest
-    docker push docker-registry-default.$(minishift ip).nip.io/${PROJECT}/committime:latest
+    docker tag pelorus/committime docker-registry-default.$(minishift ip).nip.io/openshift/committime:latest
+    docker push docker-registry-default.$(minishift ip).nip.io/openshift/committime:latest
 
-    docker tag pelorus/deploytime docker-registry-default.$(minishift ip).nip.io/${PROJECT}/deploytime:latest
-    docker push docker-registry-default.$(minishift ip).nip.io/${PROJECT}/deploytime:latest
+    docker tag pelorus/deploytime docker-registry-default.$(minishift ip).nip.io/openshift/deploytime:latest
+    docker push docker-registry-default.$(minishift ip).nip.io/openshift/deploytime:latest
 
-    docker tag pelorus/failure docker-registry-default.$(minishift ip).nip.io/${PROJECT}/failure:latest
-    docker push docker-registry-default.$(minishift ip).nip.io/${PROJECT}/failure:latest
+    docker tag pelorus/failure docker-registry-default.$(minishift ip).nip.io/openshift/failure:latest
+    docker push docker-registry-default.$(minishift ip).nip.io/openshift/failure:latest
 
 #### config
 
@@ -173,10 +173,17 @@ Desplegamos apicast
 
     //oc new-app -e OPENSSL_VERIFY=false -e APICAST_RESPONSE_CODES=true -e APICAST_CONFIGURATION_LOADER=boot -e APICAST_CONFIGURATION_CACHE=0 -e THREESCALE_DEPLOYMENT_ENV=staging -e APICAST_LOG_LEVEL=debug openshift/apicast-gateway-rhel8 --name=apicast-staging -n app-project1
 
-    oc create secret generic apicast-configuration-url-secret --from-literal=password=https://c903ebd69db06c50332b2adbd05300f82f36829231da66e0abb5d45c0adc8826@noprod-admin.prod-comafi-3scale.apps.bue299.comafi.com.ar --type=kubernetes.io/basic-auth -n app-project1
+    //oc create secret generic apicast-configuration-url-secret --from-literal=password=https://c903ebd69db06c50332b2adbd05300f82f36829231da66e0abb5d45c0adc8826@noprod-admin.prod-comafi-3scale.apps.bue299.comafi.com.ar --type=kubernetes.io/basic-auth -n app-project1
 
-    docker build -t mock-rest .
-    docker run --rm -it --name mock-rest -p 8080:8080 mock-rest
+    docker build -t mock-rest apicast/.
+    //docker run --rm -it --name mock-rest -p 8080:8080 mock-rest
+
+
+    docker login -u admin -p $(oc whoami -t) localhost:5000
+
+    docker tag mock-rest docker-registry-default.$(minishift ip).nip.io/openshift/mock-rest:latest
+    docker push docker-registry-default.$(minishift ip).nip.io/openshift/mock-rest:latest
+
 
     oc new-app -f apicast.yml -p APICAST_NAME=apicast-staging -p DEPLOYMENT_ENVIRONMENT=staging -p CONFIGURATION_LOADER=lazy -p EXTENDED_METRICS=true -n app-project2
 
