@@ -1,6 +1,8 @@
 # redhat-monitoring
 
-Prometheus + Alertmanager + Grafana (Tablero DevOps (MDT) / Metricas Fuse / AMQ / Apicast 3scale)
+**Prometheus + Alertmanager + Grafana (Tablero DevOps (MDT) / Metricas Fuse / AMQ / Apicast 3scale)**
+
+El objetivo de este repositorio es describir el procedimiento para la instalación de "stack de monitoreo"
 
 ## Diseño
 
