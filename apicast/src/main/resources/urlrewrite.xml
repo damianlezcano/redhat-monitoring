@@ -1,0 +1,8 @@
+<urlrewrite>
+
+<!--         <rule> -->
+<!--             <from>http://0.0.0.0:8080/wsh/services/RealTime/BasicHttpInt</from> -->
+<!--             <to type="redirect">http://localhost:1080/SO/IntegrationServices/ScheduleService.svc</to> -->
+<!--         </rule> -->
+
+</urlrewrite>

@@ -49,7 +49,6 @@ Prometheus + Alertmanager + Grafana (Tablero DevOps (MDT) + Metricas Fuse / AMQ 
 
 ---
 
-    MINISHIFT_IP=$(minishift ip)
     PROJECT=redhat-monitoring
     oc new-project ${PROJECT}
 
@@ -67,22 +66,22 @@ Prometheus + Alertmanager + Grafana (Tablero DevOps (MDT) + Metricas Fuse / AMQ 
 
 #### exportarmos imágenes a openshift
 
-    oc login https://${MINISHIFT_IP}:8443 -u admin
-    docker login -u admin -p $(oc whoami -t) docker-registry-default.${MINISHIFT_IP}.nip.io
+    oc login https://$(minishift ip):8443 -u admin
+    docker login -u admin -p $(oc whoami -t) docker-registry-default.$(minishift ip).nip.io
 
-    docker tag pelorus/committime docker-registry-default.${MINISHIFT_IP}.nip.io/openshift/committime:latest
-    docker push docker-registry-default.${MINISHIFT_IP}.nip.io/openshift/committime:latest
+    docker tag pelorus/committime docker-registry-default.$(minishift ip).nip.io/openshift/committime:latest
+    docker push docker-registry-default.$(minishift ip).nip.io/openshift/committime:latest
 
-    docker tag pelorus/deploytime docker-registry-default.${MINISHIFT_IP}.nip.io/openshift/deploytime:latest
-    docker push docker-registry-default.${MINISHIFT_IP}.nip.io/openshift/deploytime:latest
+    docker tag pelorus/deploytime docker-registry-default.$(minishift ip).nip.io/openshift/deploytime:latest
+    docker push docker-registry-default.$(minishift ip).nip.io/openshift/deploytime:latest
 
-    docker tag pelorus/failure docker-registry-default.${MINISHIFT_IP}.nip.io/openshift/failure:latest
-    docker push docker-registry-default.${MINISHIFT_IP}.nip.io/openshift/failure:latest
+    docker tag pelorus/failure docker-registry-default.$(minishift ip).nip.io/openshift/failure:latest
+    docker push docker-registry-default.$(minishift ip).nip.io/openshift/failure:latest
 
 #### config
 
     GITHUB_USER=damianlezcano
-    GITHUB_TOKEN=6112e26f25faf89931671137fe092f83dabf2631
+    GITHUB_TOKEN=2470742754553ec8222713c1cb82ddaf22a57748
 
     JIRA_TOKEN=CiMYWbI04wG2W5B0Ze589E3C
     JIRA_USER=lezcano.da@gmail.com
@@ -93,19 +92,19 @@ Prometheus + Alertmanager + Grafana (Tablero DevOps (MDT) + Metricas Fuse / AMQ 
 
 	oc adm policy add-cluster-role-to-user view system:serviceaccount:redhat-monitoring:default -n ${PROJECT}
 
-    oc new-app ${PROJECT}/committime:latest --name committime-exporter -e APP_FILE=exporter/app.py -e OPENSHIFT_BUILD_NAME=commiter-exporter -e NAMESPACES=app-project1 -e APP_LABEL=app -e LOG_LEVEL=DEBUG -e GITHUB_USER=${GITHUB_USER} -e GITHUB_TOKEN=${GITHUB_TOKEN} -e GITHUB_API_BAK=api.github.com -n ${PROJECT}
+    oc new-app committime:latest --name committime-exporter -e APP_FILE=exporter/app.py -e OPENSHIFT_BUILD_NAME=commiter-exporter -e NAMESPACES=app-project1 -e APP_LABEL=app -e LOG_LEVEL=DEBUG -e GITHUB_USER=${GITHUB_USER} -e GITHUB_TOKEN=${GITHUB_TOKEN} -e GITHUB_API_BAK=api.github.com -n ${PROJECT}
 
-    oc new-app ${PROJECT}/deploytime:latest --name deploytime-exporter -e APP_FILE=exporter/app.py -e OPENSHIFT_BUILD_NAME=deploytime-exporter -e NAMESPACES=app-project1 -e APP_LABEL=app -e LOG_LEVEL=DEBUG -n ${PROJECT}
+    oc new-app deploytime:latest --name deploytime-exporter -e APP_FILE=exporter/app.py -e OPENSHIFT_BUILD_NAME=deploytime-exporter -e NAMESPACES=app-project1 -e APP_LABEL=app -e LOG_LEVEL=DEBUG -n ${PROJECT}
 
-    oc new-app ${PROJECT}/failure:latest --name failure-exporter -e APP_FILE=exporter/app.py -e OPENSHIFT_BUILD_NAME=failure-exporter -e APP_LABEL=app -e LOG_LEVEL=DEBUG -e TOKEN=${JIRA_TOKEN} -e USER=${JIRA_USER} -e SERVER=${JIRA_SERVER} -e PROJECT=${JIRA_PROJECT} -n ${PROJECT}
+    oc new-app failure:latest --name failure-exporter -e APP_FILE=exporter/app.py -e OPENSHIFT_BUILD_NAME=failure-exporter -e APP_LABEL=app -e LOG_LEVEL=DEBUG -e TOKEN=${JIRA_TOKEN} -e USER=${JIRA_USER} -e SERVER=${JIRA_SERVER} -e PROJECT=${JIRA_PROJECT} -n ${PROJECT}
 
     oc expose service committime-exporter -n ${PROJECT}
     oc expose service deploytime-exporter -n ${PROJECT}
     oc expose service failure-exporter -n ${PROJECT}
 
-    oc label service committime-exporter job=openshift-state-metrics
-    oc label service deploytime-exporter  job=openshift-state-metrics
-    oc label service failure-exporter job=openshift-state-metrics
+    oc label service committime-exporter job=openshift-state-metrics -n ${PROJECT}
+    oc label service deploytime-exporter  job=openshift-state-metrics -n ${PROJECT}
+    oc label service failure-exporter job=openshift-state-metrics -n ${PROJECT}
 
 ### grafana
 
@@ -122,10 +121,10 @@ Crear secret con credenciales para descargar imagenes de registry.redhat.io
     oc create secret generic registryredhatiosecret --from-file=.dockerconfigjson=config.json --type=kubernetes.io/dockerconfigjson
     oc secrets link default registryredhatiosecret --for=pull
     oc secrets link builder registryredhatiosecret 
-    
 -->
 
     oc project openshift
+    # https://access.redhat.com/RegistryAuthentication
     oc create -f 5318211_okd-secret.yaml
     oc secrets link default 5318211-okd-pull-secret --for=pull
     oc secrets link builder 5318211-okd-pull-secret
@@ -136,10 +135,6 @@ Importamos imagenes al namespace openshift:
     oc import-image amq7/amq-broker-rhel7-operator:0.13 --from=registry.redhat.io/amq7/amq-broker-rhel7-operator:0.13 --confirm
     oc import-image amq7/amq-broker:7.6 --from=registry.redhat.io/amq7/amq-broker:7.6 --confirm
     oc import-image 3scale-amp2/apicast-gateway-rhel7 --from=registry.redhat.io/3scale-amp2/apicast-gateway-rhel7 --confirm
-
-En caso de fallar el aprovisionamiento de jenkins, utilizar la siguiente imagen:
-
-    oc import-image openshift3/jenkins-2-rhel7 --from=registry.redhat.io/openshift3/jenkins-2-rhel7 --confirm
 
 Configuramos credenciales para que jenkins acceda al repositorio
     
@@ -179,17 +174,12 @@ Desplegamos app example1
 
 Desplegamos apicast
 
-    //oc new-app -e OPENSSL_VERIFY=false -e APICAST_RESPONSE_CODES=true -e APICAST_CONFIGURATION_LOADER=boot -e APICAST_CONFIGURATION_CACHE=0 -e THREESCALE_DEPLOYMENT_ENV=staging -e APICAST_LOG_LEVEL=debug openshift/apicast-gateway-rhel8 --name=apicast-staging -n app-project1
+    cd apicast
+    mvn clean package -DskipTests -s settings.xml
+    docker build -t apicat-proxy .
 
-    //oc create secret generic apicast-configuration-url-secret --from-literal=password=http://c305ade34d4b720fa1ccfe3bfdfa0bb30c2764b108e9187063d663a7fa935016@localhost:7070 --type=kubernetes.io/basic-auth -n app-project1
-
-    docker build -t mock-rest apicast/.
-    //docker run --rm -it --name mock-rest -p 8080:8080 mock-rest
-
-    docker login -u admin -p $(oc whoami -t) localhost:5000
-
-    docker tag mock-rest docker-registry-default.${MINISHIFT_IP}.nip.io/openshift/mock-rest:latest
-    docker push docker-registry-default.${MINISHIFT_IP}.nip.io/openshift/mock-rest:latest
+    docker tag apicast-proxy docker-registry-default.$(minishift ip).nip.io/openshift/apicast-proxy:latest
+    docker push docker-registry-default.$(minishift ip).nip.io/openshift/apicast-proxy:latest
 
     oc new-app -f apicast.yml -p APICAST_NAME=apicast-staging -p DEPLOYMENT_ENVIRONMENT=staging -p CONFIGURATION_LOADER=lazy -p EXTENDED_METRICS=true -n app-project1
 
@@ -228,6 +218,9 @@ oc delete secrets "apicast-configuration-url-secret"
 oc delete services "apicast-staging"
 oc delete routes.route.openshift.io "apicast-staging"
 
+oc delete secret apicast-configuration-url-secret;oc create secret generic apicast-configuration-url-secret --from-literal=password=http://c305ade34d4b720fa1ccfe3bfdfa0bb30c2764b108e9187063d663a7fa935016@mock-rest-app-project1.192.168.64.14.nip.io --type=kubernetes.io/basic-auth -n app-project1
+
+sudo python -m SimpleHTTPServer 80 -b 0.0.0.0
 
 minishift delete --force --clear-cache;rm -rf /Users/damianlezcano/.minishift;rm -rf /Users/damianlezcano/.kube
 

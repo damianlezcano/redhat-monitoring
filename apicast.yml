@@ -97,6 +97,9 @@ objects:
             requests:
                 cpu: 500m
                 memory: 64Mi
+          volumeMounts:
+          - mountPath: /data
+            name: apicast-local-test
 
         - env:
           name: mock-rest
@@ -124,8 +127,52 @@ objects:
         - name: mock-rest-services
           configMap:
             name: mock-rest-services-config
+        - name: apicast-local-test
+          configMap:
+            name: apicast-local-test-config
+
     triggers:
     - type: ConfigChange
+
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: apicast-local-test-config
+  data:
+    local.json: |-
+      {
+        "id": 1234567890987,
+        "provider_key": "provider-key",
+        "services": [
+          {
+            "id": 654321,
+            "backend_version": "1",
+            "proxy": {
+              "api_backend": "http://127.0.0.1:9090",
+              "hostname_rewrite": "echo",
+              "hosts": [
+                "localhost",
+                "127.0.0.1"
+              ],
+              "backend": {
+                "endpoint": "http://127.0.0.1:7070",
+                "host": "backend"
+              },
+              "proxy_rules": [
+                {
+                  "http_method": "GET",
+                  "pattern": "/",
+                  "metric_system_name": "hits",
+                  "delta": 1,
+                  "parameters": [],
+                  "querystring_parameters": {}
+                }
+              ]
+            }
+          }
+        ]
+      }
+
 
 - apiVersion: v1
   kind: ConfigMap

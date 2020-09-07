@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="     http://www.springframework.org/schema/beans      http://www.springframework.org/schema/beans/spring-beans.xsd      http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
+
+    <bean id="myRewrite" class="org.apache.camel.component.urlrewrite.HttpUrlRewrite">
+        <property name="configFile" value="urlrewrite.xml" />
+    </bean>
+    
+	<camelContext id="camel" xmlns="http://camel.apache.org/schema/spring">
+	
+        <route id="api_say">
+            <from uri="jetty:{{url.from.base}}/api/say?matchOnUriPrefix=true" />
+            <to uri="jetty:{{url.to.example1}}?bridgeEndpoint=true&amp;throwExceptionOnFailure=false&amp;urlRewrite=#myRewrite" />
+            <setHeader headerName="Content-Type">
+        		<constant>text</constant>
+			</setHeader>
+        </route>
+		
+        <route id="authrep">
+            <from uri="jetty:{{url.from.base}}/transactions/authrep.xml?matchOnUriPrefix=true" />
+            <setBody>
+                <simple>${properties:authrep}</simple>
+            </setBody>
+            <setHeader headerName="Content-Type">
+                <constant>xml</constant>
+            </setHeader>
+        </route>
+
+	</camelContext>
+
+</beans>
