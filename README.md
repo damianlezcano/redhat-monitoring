@@ -71,7 +71,7 @@ Prometheus + Alertmanager + Grafana (Tablero DevOps (MDT) / Metricas Fuse / AMQ 
 
 ### prometheus y alermanager
 
-Dentro del archivo prometheus.yml estan contenidos todos la configuracion de reglas y alertas tanto para prometheus como alertmanager
+Dentro del archivo prometheus.yml estan contenidos todos la configuracion de reglas y alertas tanto para prometheus como alertmanager necesarias extraer la informacion de los exporter para tablero DevOps como asi las metricas de Fuse / AMQ y Apicast.
 
     oc new-app -f prometheus.yml -p NAMESPACE=${MONITOR_PROJECT} -p PROMETHEUS_DATA_STORAGE_SIZE=1Gi -p ALERTMANAGER_DATA_STORAGE_SIZE=1Gi
 
@@ -146,12 +146,6 @@ Instalamos:
 
 Crear secret con credenciales para descargar imagenes de registry.redhat.io
 
-<!--
-    oc create secret generic registryredhatiosecret --from-file=.dockerconfigjson=config.json --type=kubernetes.io/dockerconfigjson
-    oc secrets link default registryredhatiosecret --for=pull
-    oc secrets link builder registryredhatiosecret 
--->
-
     oc project openshift
     # https://access.redhat.com/RegistryAuthentication
     oc create -f 5318211_okd-secret.yaml
@@ -214,10 +208,16 @@ Desplegamos apicast
 
 Generar commit para el tablero DevOps (MDT)
 
+    git clone https://github.com/damianlezcano/prometheus-example-fuse.git
+    cd prometheus-example-fuse
+    
     date > version.txt
+    
     git add .;git commit -m "Cambio en version";git push
 
-Generamos tráfico para el trablero de metricas
+    oc start-build example1-pipeline -n app-project1
+
+Generamos tráfico para el trablero de metricas (fuse / amq  y apicast)
 
     curl --location --request GET 'http://apicast-staging-app-project1.192.168.64.14.nip.io/api/say?user_key=foo&hello=world'
 
