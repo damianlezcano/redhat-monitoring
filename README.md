@@ -1,9 +1,26 @@
 # redhat-monitoring
 
-Prometheus + Alertmanager + Grafana (Tablero DevOps (MDT) + Metricas Fuse / AMQ / Apicast 3scale)
+Prometheus + Alertmanager + Grafana (Tablero DevOps (MDT) / Metricas Fuse / AMQ / Apicast 3scale)
+
+## Diseño
+
+![Diseño](disenio.png)
+
+- **apicast**: API Gateway
+- **example1**: APP de ejemplo para simular trafico
+- **AMQ 7.x**: Cola de mensajeria, utilizada por "example1" para simular una falla, enviar los mensajes a la DLQ y pueda activarse una de las reglas configuradas en prometheus.
+- **prometheus**: Es el encargado de recolectar las metricas expuestas por los demas componentes (apicast / AMQ / example1 y exporters (committime, deploytime y failure) Pelorus / MDT)
+- **alertmanager**: Componente encargado de notificar cuandos se activa una alerta en 'prometheus'
+- **grafana**: Componente donde se visualizan los dashboard y que se hidrata a travez de un DataSource configurado hacia 'prometheus'
+
+## Demo
+
+![Demo](demo.gif)
+
+## Procedimiento instalación
 
 - __[Paso 1](#instalar-minishift-okd)__ - Procedimiento de instalación de Minishift (OKD).
-- __[Paso 2](#prometheus)__ - Procedimiento de instalación Prometheus.
+- __[Paso 2](#prometheus-y-alermanager)__ - Procedimiento de instalación Prometheus y alertmanager
 - __[Paso 3](#exporters-mdt)__ - Procedimiento de instalación Exporter tablero DevOps (MDT).
 - __[Paso 4](#grafana)__ - Procedimiento de instalación Grafana.
 - __[Paso 5](#ejemplo)__ - Despliegue aplicación de ejemplo (AMQ y Apicast)
@@ -49,14 +66,20 @@ Prometheus + Alertmanager + Grafana (Tablero DevOps (MDT) + Metricas Fuse / AMQ 
 
 ---
 
-    PROJECT=redhat-monitoring
-    oc new-project ${PROJECT}
+    MONITOR_PROJECT=redhat-monitoring
+    oc new-project ${MONITOR_PROJECT}
 
-### prometheus
+### prometheus y alermanager
 
-    oc new-app -f prometheus.yml -p NAMESPACE=${PROJECT} -p PROMETHEUS_DATA_STORAGE_SIZE=1Gi -p ALERTMANAGER_DATA_STORAGE_SIZE=1Gi
+Dentro del archivo prometheus.yml estan contenidos todos la configuracion de reglas y alertas tanto para prometheus como alertmanager
+
+    oc new-app -f prometheus.yml -p NAMESPACE=${MONITOR_PROJECT} -p PROMETHEUS_DATA_STORAGE_SIZE=1Gi -p ALERTMANAGER_DATA_STORAGE_SIZE=1Gi
 
 ### exporters (pelorus / MDT)
+
+![Pelorus](pelorus.jpeg)
+
+Los exporters de pelorus son los encargados de extraer las metricas de despliegue/commit de las aplicaciones del proyecto que esta monitoreando, como asi tambien el estado de los ticket en JIRA del proyecto que se haya configurado.
 
 #### creamos las imágenes
 
@@ -81,35 +104,41 @@ Prometheus + Alertmanager + Grafana (Tablero DevOps (MDT) + Metricas Fuse / AMQ 
 #### config
 
     GITHUB_USER=damianlezcano
-    GITHUB_TOKEN=2470742754553ec8222713c1cb82ddaf22a57748
+    GITHUB_TOKEN=yyyy
 
-    JIRA_TOKEN=CiMYWbI04wG2W5B0Ze589E3C
+    JIRA_TOKEN=yyyy
     JIRA_USER=lezcano.da@gmail.com
     JIRA_SERVER=https://damianlezcano.atlassian.net
     JIRA_PROJECT=AGIL
 
 #### intanciamos los exporters
 
-	oc adm policy add-cluster-role-to-user view system:serviceaccount:redhat-monitoring:default -n ${PROJECT}
+	oc adm policy add-cluster-role-to-user view system:serviceaccount:redhat-monitoring:default -n ${MONITOR_PROJECT}
 
-    oc new-app committime:latest --name committime-exporter -e APP_FILE=exporter/app.py -e OPENSHIFT_BUILD_NAME=commiter-exporter -e NAMESPACES=app-project1 -e APP_LABEL=app -e LOG_LEVEL=DEBUG -e GITHUB_USER=${GITHUB_USER} -e GITHUB_TOKEN=${GITHUB_TOKEN} -e GITHUB_API_BAK=api.github.com -n ${PROJECT}
+    oc new-app committime:latest --name committime-exporter -e APP_FILE=exporter/app.py -e OPENSHIFT_BUILD_NAME=commiter-exporter -e NAMESPACES=app-project1 -e APP_LABEL=app -e LOG_LEVEL=DEBUG -e GITHUB_USER=${GITHUB_USER} -e GITHUB_TOKEN=${GITHUB_TOKEN} -e GITHUB_API_BAK=api.github.com -n ${MONITOR_PROJECT}
 
-    oc new-app deploytime:latest --name deploytime-exporter -e APP_FILE=exporter/app.py -e OPENSHIFT_BUILD_NAME=deploytime-exporter -e NAMESPACES=app-project1 -e APP_LABEL=app -e LOG_LEVEL=DEBUG -n ${PROJECT}
+    oc new-app deploytime:latest --name deploytime-exporter -e APP_FILE=exporter/app.py -e OPENSHIFT_BUILD_NAME=deploytime-exporter -e NAMESPACES=app-project1 -e APP_LABEL=app -e LOG_LEVEL=DEBUG -n ${MONITOR_PROJECT}
 
-    oc new-app failure:latest --name failure-exporter -e APP_FILE=exporter/app.py -e OPENSHIFT_BUILD_NAME=failure-exporter -e APP_LABEL=app -e LOG_LEVEL=DEBUG -e TOKEN=${JIRA_TOKEN} -e USER=${JIRA_USER} -e SERVER=${JIRA_SERVER} -e PROJECT=${JIRA_PROJECT} -n ${PROJECT}
+    oc new-app failure:latest --name failure-exporter -e APP_FILE=exporter/app.py -e OPENSHIFT_BUILD_NAME=failure-exporter -e APP_LABEL=app -e LOG_LEVEL=DEBUG -e TOKEN=${JIRA_TOKEN} -e USER=${JIRA_USER} -e SERVER=${JIRA_SERVER} -e PROJECT=${JIRA_PROJECT} -n ${MONITOR_PROJECT}
 
-    oc expose service committime-exporter -n ${PROJECT}
-    oc expose service deploytime-exporter -n ${PROJECT}
-    oc expose service failure-exporter -n ${PROJECT}
+    oc expose service committime-exporter -n ${MONITOR_PROJECT}
+    oc expose service deploytime-exporter -n ${MONITOR_PROJECT}
+    oc expose service failure-exporter -n ${MONITOR_PROJECT}
 
-    oc label service committime-exporter job=openshift-state-metrics -n ${PROJECT}
-    oc label service deploytime-exporter  job=openshift-state-metrics -n ${PROJECT}
-    oc label service failure-exporter job=openshift-state-metrics -n ${PROJECT}
+    oc label service committime-exporter job=openshift-state-metrics -n ${MONITOR_PROJECT}
+    oc label service deploytime-exporter  job=openshift-state-metrics -n ${MONITOR_PROJECT}
+    oc label service failure-exporter job=openshift-state-metrics -n ${MONITOR_PROJECT}
 
 ### grafana
 
-    oc create configmap grafana-dashboards --from-file=grafana-dashboard-mdt.json --from-file=grafana-dashboard-fuse.json --from-file=grafana-dashboard-amq.json -n ${PROJECT}
-    oc new-app -f grafana.yaml -p NAMESPACE=${PROJECT}
+
+Dashboard:
+
+    oc create configmap grafana-dashboards --from-file=grafana-dashboard-mdt.json --from-file=grafana-dashboard-fuse.json --from-file=grafana-dashboard-amq.json --from-file=grafana-dashboard-apicast.json -n ${MONITOR_PROJECT}
+
+Instalamos:
+
+    oc new-app -f grafana.yaml -p NAMESPACE=${MONITOR_PROJECT}
 
 ### Ejemplo
 
@@ -161,8 +190,8 @@ Desplegamos AMQ
 
 Desplegamos Fake email para poder visualizar las notificaciones de alertmanager
 
-    oc new-app mailhog/mailhog -n ${PROJECT}
-    oc expose svc/mailhog --port=8025 -n ${PROJECT}
+    oc new-app mailhog/mailhog -n ${MONITOR_PROJECT}
+    oc expose svc/mailhog --port=8025 -n ${MONITOR_PROJECT}
 
 Desplegamos app example1
 
@@ -181,7 +210,7 @@ Desplegamos apicast
     docker tag apicast-proxy docker-registry-default.$(minishift ip).nip.io/openshift/apicast-proxy:latest
     docker push docker-registry-default.$(minishift ip).nip.io/openshift/apicast-proxy:latest
 
-    oc new-app -f apicast.yml -p APICAST_NAME=apicast-staging -p DEPLOYMENT_ENVIRONMENT=staging -p CONFIGURATION_LOADER=lazy -p EXTENDED_METRICS=true -n app-project1
+    oc new-app -f apicast.yml -p APICAST_NAME=apicast-staging -p DEPLOYMENT_ENVIRONMENT=staging -p CONFIGURATION_LOADER=lazy -p EXTENDED_METRICS=true -p CONFIGURATION_FILE_PATH=/opt/config/local.json -p APICAST_URL=apicast-staging-app-project1.$(minishift ip).nip.io -n app-project1
 
 Generar commit para el tablero DevOps (MDT)
 
@@ -190,39 +219,6 @@ Generar commit para el tablero DevOps (MDT)
 
 Generamos tráfico para el trablero de metricas
 
-    curl --location --request POST 'http://example1-app-project1.${minishift ip}.nip.io/api/say' --header 'Content-Type: text/plain' --data-raw 'World'
+    curl --location --request GET 'http://apicast-staging-app-project1.192.168.64.14.nip.io/api/say?user_key=foo&hello=world'
 
-_Si se reemplaza 'World' por 'Error' esto genera un error en la ruta camel enviando el mensaje a la DLQ, permitiendo activar luego de mas de 10 intentos una de las reglas configuradas en prometheus y generando finalmente una notificacion por email (Ir a http://mailhog-${PROJECT}.${minishift ip}.nip.io/)_
-
-
-
-
-
-
-
-
-
-
-
-curl http://mock-rest:8080/transactions/authrep.xml
-curl http://mock-rest.app-project1.svc:8080/transactions/authrep.xml
-curl http://mock-rest-app-project1.192.168.64.14.nip.io/transactions/authrep.xml
-
-
-oc delete service "mock-rest"
-oc delete deploymentconfigs.apps.openshift.io "apicast-staging"
-oc delete configmaps "mock-rest-services-config"
-oc delete configmap "mock-rest-transactions-config"
-oc delete configmaps "mock-rest-admin-config"
-oc delete secrets "apicast-configuration-url-secret"
-oc delete services "apicast-staging"
-oc delete routes.route.openshift.io "apicast-staging"
-
-oc delete secret apicast-configuration-url-secret;oc create secret generic apicast-configuration-url-secret --from-literal=password=http://c305ade34d4b720fa1ccfe3bfdfa0bb30c2764b108e9187063d663a7fa935016@mock-rest-app-project1.192.168.64.14.nip.io --type=kubernetes.io/basic-auth -n app-project1
-
-sudo python -m SimpleHTTPServer 80 -b 0.0.0.0
-
-minishift delete --force --clear-cache;rm -rf /Users/damianlezcano/.minishift;rm -rf /Users/damianlezcano/.kube
-
-curl http://localhost:9421/metrics
-https://medium.com/@joelicious/red-hat-3scale-monitoring-with-prometheus-and-grafana-4e683f3125bb
+_Si se reemplaza 'world' por 'error' esto genera un error en la ruta camel enviando el mensaje a la DLQ, permitiendo activar luego de mas de 10 intentos una de las reglas configuradas en prometheus y generando finalmente una notificacion por email (Ir a http://mailhog-${MONITOR_PROJECT}.${minishift ip}.nip.io/)_
