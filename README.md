@@ -23,7 +23,7 @@ Prometheus + Alertmanager + Grafana (Tablero DevOps (MDT) / Metricas Fuse / AMQ 
 - __[Paso 2](#prometheus-y-alermanager)__ - Procedimiento de instalación Prometheus y alertmanager
 - __[Paso 3](#exporters-mdt)__ - Procedimiento de instalación Exporter tablero DevOps (MDT).
 - __[Paso 4](#grafana)__ - Procedimiento de instalación Grafana.
-- __[Paso 5](#ejemplo)__ - Despliegue aplicación de ejemplo (AMQ y Apicast)
+- __[Paso 5](#ejemplo)__ - Despliegue aplicación de ejemplo (junto con AMQ, Apicast y Fake SMTP)
 
 ## instalar minishift (okd)
 
