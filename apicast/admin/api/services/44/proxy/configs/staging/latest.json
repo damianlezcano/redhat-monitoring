@@ -36,7 +36,7 @@
             "oneline_description": null,
             "proxiable?": true,
             "proxy": {
-                "api_backend": "http://example1.app-project2.svc:8080",
+                "api_backend": "http://example1.app-project1.svc:8080",
                 "api_test_path": "/",
                 "api_test_success": null,
                 "apicast_configuration_driven": true,
@@ -51,7 +51,7 @@
                 "created_at": "2020-09-04T16:09:18-03:00",
                 "credentials_location": "query",
                 "deployed_at": null,
-                "endpoint": "http://apicast-staging-app-project2.192.168.64.11.nip.io:80",
+                "endpoint": "http://apicast-staging-app-project1.192.168.64.14.nip.io:80",
                 "endpoint_port": 80,
                 "error_auth_failed": "Authentication  failed",
                 "error_auth_missing": "Authentication parameters missing",
@@ -66,10 +66,10 @@
                 "error_status_limits_exceeded": 429,
                 "error_status_no_match": 404,
                 "hostname_rewrite": "",
-                "hostname_rewrite_for_sandbox": "example1.app-project2.svc",
+                "hostname_rewrite_for_sandbox": "example1.app-project1.svc",
                 "hosts": [
-                    "apicast-staging-app-project2.192.168.64.11.nip.io",
-                    "apicast-staging-app-project2.192.168.64.11.nip.io"
+                    "apicast-staging-app-project1.192.168.64.14.nip.io",
+                    "apicast-staging-app-project1.192.168.64.14.nip.io"
                 ],
                 "id": 44,
                 "jwt_claim_with_client_id": null,
@@ -85,7 +85,7 @@
                         "version": "builtin"
                     }
                 ],
-                "production_domain": "apicast-staging-app-project2.192.168.64.11.nip.io",
+                "production_domain": "apicast-staging-app-project1.192.168.64.14.nip.io",
                 "proxy_rules": [
                     {
                         "created_at": "2020-09-04T16:09:18-03:00",
@@ -105,11 +105,11 @@
                         "updated_at": "2020-09-04T16:10:01-03:00"
                     }
                 ],
-                "sandbox_endpoint": "http://apicast-staging-app-project2.192.168.64.11.nip.io:80",
+                "sandbox_endpoint": "http://apicast-staging-app-project1.192.168.64.14.nip.io:80",
                 "secret_token": "Shared_secret_sent_from_proxy_to_API_backend_a0bc7cfabd000bef",
                 "service_backend_version": "1",
                 "service_id": 44,
-                "staging_domain": "apicast-staging-app-project2.192.168.64.11.nip.io",
+                "staging_domain": "apicast-staging-app-project1.192.168.64.14.nip.io",
                 "tenant_id": 4,
                 "updated_at": "2020-09-04T16:11:43-03:00",
                 "valid?": true

@@ -2599,8 +2599,8 @@
         "allValue": null,
         "current": {
           "selected": false,
-          "text": "app-project2",
-          "value": "app-project2"
+          "text": "app-project1",
+          "value": "app-project1"
         },
         "datasource": "prometheus",
         "definition": "label_values(org_apache_camel_ExchangesCompleted{type=\"routes\"},namespace)",

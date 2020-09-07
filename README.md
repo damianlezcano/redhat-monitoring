@@ -25,25 +25,22 @@ Prometheus + Alertmanager + Grafana (Tablero DevOps (MDT) + Metricas Fuse / AMQ 
 
 ### start
 
-    minishift addons list
     minishift addon enable admin-user
     minishift addon enable anyuid
     minishift addon enable xpaas
     minishift addon enable registry-route
     minishift addon enable redhat-registry-login
-    eval $(minishift oc-env)
-    eval $(minishift docker-env)
-    minishift openshift config set --patch '{"jenkinsPipelineConfig":{"autoProvisionEnabled":true}}'
-
----
 
     minishift start --cpus=4 --memory=10GB --disk-size=60GB --vm-driver hyperkit --skip-registration
+    minishift openshift config set --patch '{"jenkinsPipelineConfig":{"autoProvisionEnabled":true}}'
 
 #### Adding the cluster admin role, to the 'admin' user in Minishift
 
     minishift ssh
     docker exec -it origin bash
     oc --config=/var/lib/origin/openshift.local.config/master/admin.kubeconfig  adm policy  --as system:admin add-cluster-role-to-user cluster-admin admin
+    exit
+    exit
 
 ## instalar stack monitoreo
 
@@ -52,6 +49,7 @@ Prometheus + Alertmanager + Grafana (Tablero DevOps (MDT) + Metricas Fuse / AMQ 
 
 ---
 
+    MINISHIFT_IP=$(minishift ip)
     PROJECT=redhat-monitoring
     oc new-project ${PROJECT}
 
@@ -59,7 +57,7 @@ Prometheus + Alertmanager + Grafana (Tablero DevOps (MDT) + Metricas Fuse / AMQ 
 
     oc new-app -f prometheus.yml -p NAMESPACE=${PROJECT} -p PROMETHEUS_DATA_STORAGE_SIZE=1Gi -p ALERTMANAGER_DATA_STORAGE_SIZE=1Gi
 
-### exporters (MDT)
+### exporters (pelorus / MDT)
 
 #### creamos las imágenes
 
@@ -69,24 +67,24 @@ Prometheus + Alertmanager + Grafana (Tablero DevOps (MDT) + Metricas Fuse / AMQ 
 
 #### exportarmos imágenes a openshift
 
-    oc login https://$(minishift ip):8443 -u admin
-    docker login -u admin -p $(oc whoami -t) docker-registry-default.$(minishift ip).nip.io
+    oc login https://${MINISHIFT_IP}:8443 -u admin
+    docker login -u admin -p $(oc whoami -t) docker-registry-default.${MINISHIFT_IP}.nip.io
 
-    docker tag pelorus/committime docker-registry-default.$(minishift ip).nip.io/openshift/committime:latest
-    docker push docker-registry-default.$(minishift ip).nip.io/openshift/committime:latest
+    docker tag pelorus/committime docker-registry-default.${MINISHIFT_IP}.nip.io/openshift/committime:latest
+    docker push docker-registry-default.${MINISHIFT_IP}.nip.io/openshift/committime:latest
 
-    docker tag pelorus/deploytime docker-registry-default.$(minishift ip).nip.io/openshift/deploytime:latest
-    docker push docker-registry-default.$(minishift ip).nip.io/openshift/deploytime:latest
+    docker tag pelorus/deploytime docker-registry-default.${MINISHIFT_IP}.nip.io/openshift/deploytime:latest
+    docker push docker-registry-default.${MINISHIFT_IP}.nip.io/openshift/deploytime:latest
 
-    docker tag pelorus/failure docker-registry-default.$(minishift ip).nip.io/openshift/failure:latest
-    docker push docker-registry-default.$(minishift ip).nip.io/openshift/failure:latest
+    docker tag pelorus/failure docker-registry-default.${MINISHIFT_IP}.nip.io/openshift/failure:latest
+    docker push docker-registry-default.${MINISHIFT_IP}.nip.io/openshift/failure:latest
 
 #### config
 
     GITHUB_USER=damianlezcano
-    GITHUB_TOKEN=xxxx
+    GITHUB_TOKEN=6112e26f25faf89931671137fe092f83dabf2631
 
-    JIRA_TOKEN=xxxx
+    JIRA_TOKEN=CiMYWbI04wG2W5B0Ze589E3C
     JIRA_USER=lezcano.da@gmail.com
     JIRA_SERVER=https://damianlezcano.atlassian.net
     JIRA_PROJECT=AGIL
@@ -111,31 +109,41 @@ Prometheus + Alertmanager + Grafana (Tablero DevOps (MDT) + Metricas Fuse / AMQ 
 
 ### grafana
 
-    oc create configmap grafana-dashboards --from-file=grafana-dashboard-mdt.json --from-file=grafana-dashboard-fuse.json --from-file=grafana-dashboard-amq.json
+    oc create configmap grafana-dashboards --from-file=grafana-dashboard-mdt.json --from-file=grafana-dashboard-fuse.json --from-file=grafana-dashboard-amq.json -n ${PROJECT}
     oc new-app -f grafana.yaml -p NAMESPACE=${PROJECT}
 
 ### Ejemplo
 
 #### app-project1 (build jenkins strategy)
 
-    oc new-project app-project1
-
 Crear secret con credenciales para descargar imagenes de registry.redhat.io
 
-    oc create secret generic registryredhatiosecret --from-file=.dockerconfigjson=config.json --type=kubernetes.io/dockerconfigjson -n openshift
-    oc secrets link default registryredhatiosecret --for=pull -n openshift
-    oc secrets link builder registryredhatiosecret -n openshift
-
-Importamos imagenes al namespace openshift
+<!--
+    oc create secret generic registryredhatiosecret --from-file=.dockerconfigjson=config.json --type=kubernetes.io/dockerconfigjson
+    oc secrets link default registryredhatiosecret --for=pull
+    oc secrets link builder registryredhatiosecret 
+    
+-->
 
     oc project openshift
-    oc import-image openshift3/jenkins:2 --from=registry.redhat.io/openshift3/jenkins-2-rhel7 --confirm
+    oc create -f 5318211_okd-secret.yaml
+    oc secrets link default 5318211-okd-pull-secret --for=pull
+    oc secrets link builder 5318211-okd-pull-secret
+
+Importamos imagenes al namespace openshift:
+
     oc import-image fuse7/fuse-java-openshift:1.2 --from=registry.redhat.io/fuse7/fuse-java-openshift --confirm
     oc import-image amq7/amq-broker-rhel7-operator:0.13 --from=registry.redhat.io/amq7/amq-broker-rhel7-operator:0.13 --confirm
     oc import-image amq7/amq-broker:7.6 --from=registry.redhat.io/amq7/amq-broker:7.6 --confirm
     oc import-image 3scale-amp2/apicast-gateway-rhel7 --from=registry.redhat.io/3scale-amp2/apicast-gateway-rhel7 --confirm
 
+En caso de fallar el aprovisionamiento de jenkins, utilizar la siguiente imagen:
+
+    oc import-image openshift3/jenkins-2-rhel7 --from=registry.redhat.io/openshift3/jenkins-2-rhel7 --confirm
+
 Configuramos credenciales para que jenkins acceda al repositorio
+    
+    oc new-project app-project1
 
     oc create secret generic repository-credentials --from-literal=username=${GITHUB_USER} --from-literal=password=${GITHUB_TOKEN} --type=kubernetes.io/basic-auth -n app-project1
 
@@ -178,16 +186,12 @@ Desplegamos apicast
     docker build -t mock-rest apicast/.
     //docker run --rm -it --name mock-rest -p 8080:8080 mock-rest
 
-
     docker login -u admin -p $(oc whoami -t) localhost:5000
 
-    docker tag mock-rest docker-registry-default.$(minishift ip).nip.io/openshift/mock-rest:latest
-    docker push docker-registry-default.$(minishift ip).nip.io/openshift/mock-rest:latest
+    docker tag mock-rest docker-registry-default.${MINISHIFT_IP}.nip.io/openshift/mock-rest:latest
+    docker push docker-registry-default.${MINISHIFT_IP}.nip.io/openshift/mock-rest:latest
 
-
-    oc new-app -f apicast.yml -p APICAST_NAME=apicast-staging -p DEPLOYMENT_ENVIRONMENT=staging -p CONFIGURATION_LOADER=lazy -p EXTENDED_METRICS=true -n app-project2
-
-
+    oc new-app -f apicast.yml -p APICAST_NAME=apicast-staging -p DEPLOYMENT_ENVIRONMENT=staging -p CONFIGURATION_LOADER=lazy -p EXTENDED_METRICS=true -n app-project1
 
 Generar commit para el tablero DevOps (MDT)
 
@@ -211,8 +215,8 @@ _Si se reemplaza 'World' por 'Error' esto genera un error en la ruta camel envia
 
 
 curl http://mock-rest:8080/transactions/authrep.xml
-curl http://mock-rest.app-project2.svc:8080/transactions/authrep.xml
-curl http://mock-rest-app-project2.192.168.64.11.nip.io/transactions/authrep.xml
+curl http://mock-rest.app-project1.svc:8080/transactions/authrep.xml
+curl http://mock-rest-app-project1.192.168.64.14.nip.io/transactions/authrep.xml
 
 
 oc delete service "mock-rest"
@@ -225,7 +229,7 @@ oc delete services "apicast-staging"
 oc delete routes.route.openshift.io "apicast-staging"
 
 
-
+minishift delete --force --clear-cache;rm -rf /Users/damianlezcano/.minishift;rm -rf /Users/damianlezcano/.kube
 
 curl http://localhost:9421/metrics
 https://medium.com/@joelicious/red-hat-3scale-monitoring-with-prometheus-and-grafana-4e683f3125bb
