@@ -140,7 +140,7 @@ Dashboard:
 
 Instalamos:
 
-    oc new-app -f grafana.yaml -p NAMESPACE=${MONITOR_PROJECT}
+    oc new-app -f grafana.yaml -p NAMESPACE=${MONITOR_PROJECT} -p GRAFANA_DATA_STORAGE_SIZE=2Gi
 
 ### Ejemplo
 

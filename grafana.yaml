@@ -27,7 +27,7 @@ parameters:
   generate: expression
   from: "[a-zA-Z0-9]{43}"
 - description: Storage data size
-  name: GRAFANA_SIZE
+  name: GRAFANA_DATA_STORAGE_SIZE
   value: 1Gi
 objects:
 - apiVersion: v1
@@ -188,7 +188,7 @@ objects:
     - ReadWriteOnce
     resources:
       requests:
-        storage: ${GRAFANA_SIZE}
+        storage: ${GRAFANA_DATA_STORAGE_SIZE}
 
 - apiVersion: v1
   kind: ConfigMap
